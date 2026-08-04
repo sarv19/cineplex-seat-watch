@@ -1,0 +1,13 @@
+{
+  "name": "cineplex-seat-watch",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node monitor.mjs",
+    "notify": "node notify.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

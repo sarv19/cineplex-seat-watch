@@ -1,0 +1,159 @@
+{
+  "theatreId": 7420,
+  "timeZone": "America/Toronto",
+  "stopCheckingMinutesBefore": 5,
+  "watchedSeats": [
+    "F7",
+    "F8",
+    "F9",
+    "F10",
+    "F11",
+    "F12",
+    "F13",
+    "F14",
+    "F15",
+    "F16",
+    "F17",
+    "F18",
+    "F19",
+    "F20",
+    "F21",
+    "F22",
+    "F23",
+    "G7",
+    "G8",
+    "G9",
+    "G10",
+    "G11",
+    "G12",
+    "G13"
+  ],
+  "showtimes": [
+    {
+      "id": "385287",
+      "label": "August 7, 2026 at 3:00 PM",
+      "startsAt": "2026-08-07T15:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=385287&dbox=false"
+    },
+    {
+      "id": "386739",
+      "label": "August 16, 2026 at 7:00 PM",
+      "startsAt": "2026-08-16T19:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=386739&dbox=false"
+    },
+    {
+      "id": "386738",
+      "label": "August 16, 2026 at 11:00 PM",
+      "startsAt": "2026-08-16T23:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=386738&dbox=false"
+    },
+    {
+      "id": "386790",
+      "label": "August 17, 2026 at 7:00 PM",
+      "startsAt": "2026-08-17T19:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=386790&dbox=false"
+    },
+    {
+      "id": "386789",
+      "label": "August 17, 2026 at 11:00 PM",
+      "startsAt": "2026-08-17T23:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=386789&dbox=false"
+    },
+    {
+      "id": "387177",
+      "label": "August 28, 2026 at 7:00 PM",
+      "startsAt": "2026-08-28T19:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387177&dbox=false"
+    },
+    {
+      "id": "387178",
+      "label": "August 28, 2026 at 11:00 PM",
+      "startsAt": "2026-08-28T23:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387178&dbox=false"
+    },
+    {
+      "id": "387179",
+      "label": "August 29, 2026 at 11:00 AM",
+      "startsAt": "2026-08-29T11:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387179&dbox=false"
+    },
+    {
+      "id": "387180",
+      "label": "August 29, 2026 at 3:00 PM",
+      "startsAt": "2026-08-29T15:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387180&dbox=false"
+    },
+    {
+      "id": "387181",
+      "label": "August 29, 2026 at 7:00 PM",
+      "startsAt": "2026-08-29T19:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387181&dbox=false"
+    },
+    {
+      "id": "387182",
+      "label": "August 29, 2026 at 11:00 PM",
+      "startsAt": "2026-08-29T23:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387182&dbox=false"
+    },
+    {
+      "id": "387183",
+      "label": "August 30, 2026 at 11:00 AM",
+      "startsAt": "2026-08-30T11:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?theatreId=7420&showtimeId=387183&dbox=false"
+    },
+    {
+      "id": "387184",
+      "label": "August 30, 2026 at 3:00 PM",
+      "startsAt": "2026-08-30T15:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387184&dbox=false"
+    },
+    {
+      "id": "387185",
+      "label": "August 30, 2026 at 7:00 PM",
+      "startsAt": "2026-08-30T19:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387185&dbox=false"
+    },
+    {
+      "id": "387186",
+      "label": "August 30, 2026 at 11:00 PM",
+      "startsAt": "2026-08-30T23:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387186&dbox=false"
+    },
+    {
+      "id": "387189",
+      "label": "August 31, 2026 at 7:00 PM",
+      "startsAt": "2026-08-31T19:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387189&dbox=false"
+    },
+    {
+      "id": "387190",
+      "label": "August 31, 2026 at 11:00 PM",
+      "startsAt": "2026-08-31T23:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387190&dbox=false"
+    },
+    {
+      "id": "387226",
+      "label": "September 10, 2026 at 6:00 PM",
+      "startsAt": "2026-09-10T18:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387226&dbox=false"
+    },
+    {
+      "id": "387227",
+      "label": "September 10, 2026 at 10:00 PM",
+      "startsAt": "2026-09-10T22:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387227&dbox=false"
+    },
+    {
+      "id": "387246",
+      "label": "September 16, 2026 at 6:00 PM",
+      "startsAt": "2026-09-16T18:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387246&dbox=false"
+    },
+    {
+      "id": "387247",
+      "label": "September 16, 2026 at 10:00 PM",
+      "startsAt": "2026-09-16T22:00:00-04:00",
+      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387247&dbox=false"
+    }
+  ]
+}
