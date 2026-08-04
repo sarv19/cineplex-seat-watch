@@ -17,7 +17,7 @@ concurrency:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Check out monitor
@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name "cineplex-seat-watch[bot]"
           git config user.email "cineplex-seat-watch[bot]@users.noreply.github.com"
-          git add .monitor-state.json .seat-map-cache.json
+          git add .monitor-state.json .seat-map-cache.json .discovery-cache.json
           if ! git diff --cached --quiet; then
             git commit -m "Update seat monitor state"
             git push
@@ -48,6 +48,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync("alerts.json","utf8")); process.exit(r.allExpired ? 0 : 1)'; then
+          if node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync("alerts.json","utf8")); process.exit(r.shouldDisable ? 0 : 1)'; then
             gh workflow disable monitor.yml
           fi

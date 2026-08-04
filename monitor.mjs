@@ -1,7 +1,9 @@
 import { readFile, writeFile } from "node:fs/promises";
 
-const API_BASE = "https://apis.cineplex.com/prod/ticketing/api";
+const TICKETING_API = "https://apis.cineplex.com/prod/ticketing/api";
+const THEATRICAL_API = "https://apis.cineplex.com/prod/cpx/theatrical/api";
 const subscriptionKey = process.env.CINEPLEX_SUBSCRIPTION_KEY;
+const dryRun = process.env.MONITOR_DRY_RUN === "true";
 
 if (!subscriptionKey) {
   throw new Error("CINEPLEX_SUBSCRIPTION_KEY is required");
@@ -12,13 +14,19 @@ const previousState = await readJson(".monitor-state.json", {
   availableByShowtime: {},
 });
 const seatMapCache = await readJson(".seat-map-cache.json", {});
+const discoveryCache = await readJson(".discovery-cache.json", {
+  refreshedAt: null,
+  lastQualifyingShowtimeStartsAt: null,
+  showtimes: [],
+});
 const now = Date.now();
+const allShowtimes = await getShowtimes();
 const stopOffsetMs = config.stopCheckingMinutesBefore * 60_000;
-const activeShowtimes = config.showtimes.filter(
+const activeShowtimes = allShowtimes.filter(
   (showtime) => now < new Date(showtime.startsAt).getTime() - stopOffsetMs,
 );
 
-const checks = await mapWithConcurrency(activeShowtimes, 4, checkShowtime);
+const checks = await mapWithConcurrency(activeShowtimes, 8, checkShowtime);
 const successfulChecks = checks.filter((check) => !check.error);
 const errors = checks.filter((check) => check.error);
 const nextAvailableByShowtime = { ...previousState.availableByShowtime };
@@ -41,25 +49,40 @@ for (const check of successfulChecks) {
   nextAvailableByShowtime[check.id] = check.available;
 }
 
-for (const showtime of config.showtimes) {
-  if (!activeShowtimes.some((active) => active.id === showtime.id)) {
-    delete nextAvailableByShowtime[showtime.id];
-  }
+const knownIds = new Set(activeShowtimes.map((showtime) => showtime.id));
+for (const id of Object.keys(nextAvailableByShowtime)) {
+  if (!knownIds.has(id)) delete nextAvailableByShowtime[id];
+}
+for (const id of Object.keys(seatMapCache)) {
+  if (!knownIds.has(id)) delete seatMapCache[id];
 }
 
-await writeFile(
-  ".monitor-state.json",
-  `${JSON.stringify({ availableByShowtime: nextAvailableByShowtime }, null, 2)}\n`,
-);
+const lastKnownStart = discoveryCache.lastQualifyingShowtimeStartsAt
+  ? new Date(discoveryCache.lastQualifyingShowtimeStartsAt).getTime()
+  : null;
+const shutdownGraceMs = config.shutdownGraceDays * 24 * 60 * 60_000;
+const shouldDisable =
+  activeShowtimes.length === 0 &&
+  lastKnownStart !== null &&
+  now > lastKnownStart + shutdownGraceMs;
+
+if (!dryRun) {
+  await writeFile(
+    ".monitor-state.json",
+    `${JSON.stringify({ availableByShowtime: nextAvailableByShowtime }, null, 2)}\n`,
+  );
+}
 await writeFile(".seat-map-cache.json", `${JSON.stringify(seatMapCache, null, 2)}\n`);
+await writeFile(".discovery-cache.json", `${JSON.stringify(discoveryCache, null, 2)}\n`);
 await writeFile(
   "alerts.json",
   `${JSON.stringify(
     {
       alerts,
+      discoveredShowtimeCount: allShowtimes.length,
       activeShowtimeCount: activeShowtimes.length,
       checkedShowtimeCount: successfulChecks.length,
-      allExpired: activeShowtimes.length === 0,
+      shouldDisable,
       errors,
     },
     null,
@@ -68,7 +91,8 @@ await writeFile(
 );
 
 console.log(
-  `Checked ${successfulChecks.length}/${activeShowtimes.length} active showtimes; ` +
+  `Discovered ${allShowtimes.length} qualifying showtimes. ` +
+    `Checked ${successfulChecks.length}/${activeShowtimes.length} active showtimes; ` +
     `${alerts.length} new availability alert(s).`,
 );
 
@@ -78,6 +102,108 @@ for (const error of errors) {
 
 if (activeShowtimes.length > 0 && successfulChecks.length === 0) {
   process.exitCode = 1;
+}
+
+async function getShowtimes() {
+  const refreshAfterMs = config.discoveryRefreshHours * 60 * 60_000;
+  const refreshedAt = discoveryCache.refreshedAt
+    ? new Date(discoveryCache.refreshedAt).getTime()
+    : 0;
+  const cacheIsFresh =
+    discoveryCache.showtimes.length > 0 && now - refreshedAt < refreshAfterMs;
+
+  if (cacheIsFresh) return discoveryCache.showtimes;
+
+  try {
+    const discovered = await discoverShowtimes();
+    const newestStart = discovered.reduce(
+      (latest, showtime) =>
+        !latest || new Date(showtime.startsAt) > new Date(latest)
+          ? showtime.startsAt
+          : latest,
+      discoveryCache.lastQualifyingShowtimeStartsAt,
+    );
+
+    discoveryCache.refreshedAt = new Date(now).toISOString();
+    discoveryCache.lastQualifyingShowtimeStartsAt = newestStart;
+    discoveryCache.showtimes = discovered;
+    return discovered;
+  } catch (error) {
+    if (discoveryCache.showtimes.length > 0) {
+      console.error(`Showtime discovery failed; using cached list: ${error.message}`);
+      return discoveryCache.showtimes;
+    }
+    throw error;
+  }
+}
+
+async function discoverShowtimes() {
+  const bookableDates = await fetchJson(
+    `${THEATRICAL_API}/v1/dates/bookable?locationId=${config.theatreId}`,
+  );
+  const today = new Date(now);
+  today.setUTCHours(0, 0, 0, 0);
+  const discoveryStart = today.getTime() - 24 * 60 * 60_000;
+  const horizon = today.getTime() + config.discoveryHorizonDays * 24 * 60 * 60_000;
+  const dates = bookableDates
+    .map((value) => String(value).slice(0, 10))
+    .filter((date) => {
+      const timestamp = new Date(`${date}T00:00:00Z`).getTime();
+      return timestamp >= discoveryStart && timestamp <= horizon;
+    });
+  const dailyListings = await mapWithConcurrency(dates, 8, async (date) =>
+    fetchJson(`${THEATRICAL_API}/v1/showtimes?locationId=${config.theatreId}&date=${date}`),
+  );
+  const discovered = [];
+
+  for (const listing of dailyListings) {
+    for (const theatre of listing ?? []) {
+      if (Number(theatre.theatreId) !== Number(config.theatreId)) continue;
+
+      for (const day of theatre.dates ?? []) {
+        for (const movie of day.movies ?? []) {
+          if (
+            Number(movie.id) !== Number(config.movieId) &&
+            movie.name?.toLowerCase() !== config.movieName.toLowerCase()
+          ) {
+            continue;
+          }
+
+          for (const experience of movie.experiences ?? []) {
+            const types = experience.experienceTypes ?? [];
+            if (!config.requiredExperienceTypes.every((type) => types.includes(type))) {
+              continue;
+            }
+
+            for (const session of experience.sessions ?? []) {
+              if (
+                !session.isShowtimeEnabledOnline ||
+                !session.isReservedSeating ||
+                session.isInThePast
+              ) {
+                continue;
+              }
+
+              const id = String(session.vistaSessionId);
+              const startsAt = session.showStartDateTimeUtc;
+              discovered.push({
+                id,
+                label: formatShowtime(startsAt),
+                startsAt,
+                url:
+                  `https://www.cineplex.com/ticketing/preview?locationId=${config.theatreId}` +
+                  `&showtimeId=${id}&dbox=false`,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return [...new Map(discovered.map((showtime) => [showtime.id, showtime])).values()].sort(
+    (a, b) => new Date(a.startsAt) - new Date(b.startsAt),
+  );
 }
 
 async function checkShowtime(showtime) {
@@ -109,7 +235,7 @@ async function getSeatIds(showtime) {
   }
 
   const layout = await fetchJson(
-    `${API_BASE}/v1/theatre/${config.theatreId}/showtime/${showtime.id}/seat-layout`,
+    `${TICKETING_API}/v1/theatre/${config.theatreId}/showtime/${showtime.id}/seat-layout`,
   );
   const seatsByLabel = {};
   collectSeats(layout, seatsByLabel);
@@ -129,7 +255,7 @@ async function getSeatIds(showtime) {
 
 async function getAvailability(showtimeId) {
   return fetchJson(
-    `${API_BASE}/v1/theatre/${config.theatreId}/showtime/${showtimeId}/seat-availability?preview=true`,
+    `${TICKETING_API}/v1/theatre/${config.theatreId}/showtime/${showtimeId}/seat-availability?preview=true`,
   );
 }
 
@@ -138,6 +264,17 @@ function availableWatchedSeats(availability, seatIds) {
   return config.watchedSeats.filter(
     (seat) => String(statuses[seatIds[seat]]).toLowerCase() === "available",
   );
+}
+
+function formatShowtime(startsAt) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: config.timeZone,
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(startsAt));
 }
 
 function collectSeats(value, result) {

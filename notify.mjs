@@ -10,17 +10,24 @@ if (!token || !repository) {
 
 const result = JSON.parse(await readFile("alerts.json", "utf8"));
 
-for (const alert of result.alerts) {
-  const title = `Cineplex seats available — ${alert.label}: ${alert.seats.join(", ")}`;
+if (result.alerts.length > 0) {
+  const title =
+    result.alerts.length === 1
+      ? `Cineplex seats available — ${result.alerts[0].label}: ${result.alerts[0].seats.join(", ")}`
+      : `Cineplex seats available in ${result.alerts.length} showtimes`;
+  const sections = result.alerts.map((alert) =>
+    [
+      `### ${alert.label}`,
+      "",
+      `- **Newly available:** ${alert.seats.join(", ")}`,
+      `- **All watched seats currently available:** ${alert.allAvailableSeats.join(", ")}`,
+      `- [Open Cineplex and book now](${alert.url})`,
+    ].join("\n"),
+  );
   const body = [
     "## Watched Cineplex seats are available",
     "",
-    `**Showtime:** ${alert.label}`,
-    `**Newly available:** ${alert.seats.join(", ")}`,
-    `**All watched seats currently available:** ${alert.allAvailableSeats.join(", ")}`,
-    "",
-    `[Open Cineplex and book now](${alert.url})`,
-    "",
+    ...sections.flatMap((section) => [section, ""]),
     "This monitor does not select, hold, or purchase seats.",
   ].join("\n");
 
@@ -50,7 +57,8 @@ for (const alert of result.alerts) {
 if (process.env.GITHUB_STEP_SUMMARY) {
   await appendFile(
     process.env.GITHUB_STEP_SUMMARY,
-    `Checked ${result.checkedShowtimeCount} active showtimes. ` +
+    `Discovered ${result.discoveredShowtimeCount} qualifying showtimes. ` +
+      `Checked ${result.checkedShowtimeCount} active showtimes. ` +
       `Created ${result.alerts.length} alert(s).\n`,
   );
 }
