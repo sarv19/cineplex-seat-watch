@@ -1,13 +1,7 @@
 {
-  "refreshedAt": "2026-08-05T15:17:54.950Z",
+  "refreshedAt": "2026-08-05T22:07:39.937Z",
   "lastQualifyingShowtimeStartsAt": "2026-09-17T02:00:00Z",
   "showtimes": [
-    {
-      "id": "385278",
-      "label": "August 5, 2026 at 3:00 p.m.",
-      "startsAt": "2026-08-05T19:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=385278&dbox=false"
-    },
     {
       "id": "385279",
       "label": "August 5, 2026 at 7:00 p.m.",
