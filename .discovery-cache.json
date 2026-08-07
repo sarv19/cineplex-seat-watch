@@ -1,19 +1,7 @@
 {
-  "refreshedAt": "2026-08-07T14:28:46.679Z",
+  "refreshedAt": "2026-08-07T21:03:42.628Z",
   "lastQualifyingShowtimeStartsAt": "2026-09-17T02:00:00Z",
   "showtimes": [
-    {
-      "id": "385288",
-      "label": "August 7, 2026 at 11:00 a.m.",
-      "startsAt": "2026-08-07T15:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=385288&dbox=false"
-    },
-    {
-      "id": "385287",
-      "label": "August 7, 2026 at 3:00 p.m.",
-      "startsAt": "2026-08-07T19:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=385287&dbox=false"
-    },
     {
       "id": "385286",
       "label": "August 7, 2026 at 7:00 p.m.",
