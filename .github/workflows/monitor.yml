@@ -30,7 +30,7 @@ jobs:
 
       - name: Notify about newly available seats
         env:
-          ALERT_ASSIGNEE: sarv19
+          ALERT_RECIPIENT: 0916dhkim
           GITHUB_TOKEN: ${{ github.token }}
         run: node notify.mjs
 

@@ -15,9 +15,15 @@ const previousState = await readJson(".monitor-state.json", {
 });
 const seatMapCache = await readJson(".seat-map-cache.json", {});
 const discoveryCache = await readJson(".discovery-cache.json", {
+  scope: null,
   refreshedAt: null,
   lastQualifyingShowtimeStartsAt: null,
   showtimes: [],
+});
+const discoveryScope = JSON.stringify({
+  theatreId: config.theatreId,
+  movieId: config.movieId,
+  requiredExperienceTypes: [...config.requiredExperienceTypes].sort(),
 });
 const now = Date.now();
 const allShowtimes = await getShowtimes();
@@ -110,7 +116,9 @@ async function getShowtimes() {
     ? new Date(discoveryCache.refreshedAt).getTime()
     : 0;
   const cacheIsFresh =
-    discoveryCache.showtimes.length > 0 && now - refreshedAt < refreshAfterMs;
+    discoveryCache.scope === discoveryScope &&
+    discoveryCache.showtimes.length > 0 &&
+    now - refreshedAt < refreshAfterMs;
 
   if (cacheIsFresh) return discoveryCache.showtimes;
 
@@ -121,15 +129,21 @@ async function getShowtimes() {
         !latest || new Date(showtime.startsAt) > new Date(latest)
           ? showtime.startsAt
           : latest,
-      discoveryCache.lastQualifyingShowtimeStartsAt,
+      discoveryCache.scope === discoveryScope
+        ? discoveryCache.lastQualifyingShowtimeStartsAt
+        : null,
     );
 
+    discoveryCache.scope = discoveryScope;
     discoveryCache.refreshedAt = new Date(now).toISOString();
     discoveryCache.lastQualifyingShowtimeStartsAt = newestStart;
     discoveryCache.showtimes = discovered;
     return discovered;
   } catch (error) {
-    if (discoveryCache.showtimes.length > 0) {
+    if (
+      discoveryCache.scope === discoveryScope &&
+      discoveryCache.showtimes.length > 0
+    ) {
       console.error(`Showtime discovery failed; using cached list: ${error.message}`);
       return discoveryCache.showtimes;
     }

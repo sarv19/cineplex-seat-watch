@@ -2,7 +2,7 @@ import { readFile, appendFile } from "node:fs/promises";
 
 const token = process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
-const assignee = process.env.ALERT_ASSIGNEE;
+const recipient = process.env.ALERT_RECIPIENT?.replace(/^@/, "");
 
 if (!token || !repository) {
   throw new Error("GITHUB_TOKEN and GITHUB_REPOSITORY are required");
@@ -27,6 +27,7 @@ if (result.alerts.length > 0) {
   const body = [
     "## Watched Cineplex seats are available",
     "",
+    ...(recipient ? [`@${recipient}`, ""] : []),
     ...sections.flatMap((section) => [section, ""]),
     "This monitor does not select, hold, or purchase seats.",
   ].join("\n");
@@ -42,7 +43,6 @@ if (result.alerts.length > 0) {
     body: JSON.stringify({
       title,
       body,
-      ...(assignee ? { assignees: [assignee] } : {}),
     }),
   });
 

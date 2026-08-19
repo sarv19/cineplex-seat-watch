@@ -1,9 +1,10 @@
 # Cineplex seat watch
 
 This repository discovers every online, reserved-seat showing of *The Odyssey*
-in IMAX 70MM at Cineplex Cinemas Mississauga Square One. It checks seats F7–F23,
+in IMAX 70MM at Cineplex Cinemas Vaughan. It checks seats F7–F23,
 G7–G13, H7–H23, I7–I13, and J7–J13 approximately every five minutes and
-creates an assigned GitHub issue when a watched seat becomes newly available.
+creates a GitHub issue mentioning `@0916dhkim` when a watched seat becomes newly
+available.
 
 The qualifying showtime list is refreshed from Cineplex every six hours, so newly
 added showtimes are included automatically. Multiple availability hits from one
