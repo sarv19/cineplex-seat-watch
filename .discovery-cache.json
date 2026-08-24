@@ -1,14 +1,8 @@
 {
   "scope": "{\"theatreId\":7408,\"movieId\":37617,\"requiredExperienceTypes\":[\"70mm\",\"IMAX\"]}",
-  "refreshedAt": "2026-08-24T15:50:35.959Z",
+  "refreshedAt": "2026-08-24T21:57:37.339Z",
   "lastQualifyingShowtimeStartsAt": "2026-09-17T03:00:00Z",
   "showtimes": [
-    {
-      "id": "539535",
-      "label": "August 24, 2026 at 3:00 p.m.",
-      "startsAt": "2026-08-24T19:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7408&showtimeId=539535&dbox=false"
-    },
     {
       "id": "539534",
       "label": "August 24, 2026 at 7:00 p.m.",
