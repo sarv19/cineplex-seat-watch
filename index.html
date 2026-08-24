@@ -936,17 +936,34 @@
       { row: 'J', start: 7, end: 13, count: 7 },
     ];
 
+    async function fetchResource(filename) {
+      // 1. Try relative path (standard GitHub Pages & local HTTP servers)
+      try {
+        const res = await fetch(filename + '?t=' + Date.now());
+        if (res.ok) return await res.json();
+      } catch (_) {}
+
+      // 2. Try raw GitHub URL (for file:// protocol or local preview)
+      try {
+        const rawUrl = 'https://raw.githubusercontent.com/sarv19/cineplex-seat-watch/main/' + filename + '?t=' + Date.now();
+        const res = await fetch(rawUrl);
+        if (res.ok) return await res.json();
+      } catch (_) {}
+
+      return null;
+    }
+
     async function loadData() {
       try {
         const [configRes, discoveryRes, stateRes] = await Promise.all([
-          fetch('showtimes.json?t=' + Date.now()).then(r => r.json()).catch(() => ({})),
-          fetch('.discovery-cache.json?t=' + Date.now()).then(r => r.json()).catch(() => ({ showtimes: [] })),
-          fetch('.monitor-state.json?t=' + Date.now()).then(r => r.json()).catch(() => ({ availableByShowtime: {} }))
+          fetchResource('showtimes.json'),
+          fetchResource('.discovery-cache.json'),
+          fetchResource('.monitor-state.json')
         ]);
 
-        showtimesConfig = configRes;
-        discoveryData = discoveryRes;
-        monitorState = stateRes;
+        showtimesConfig = configRes || {};
+        discoveryData = discoveryRes || { showtimes: [] };
+        monitorState = stateRes || { availableByShowtime: {} };
 
         updateStats();
         renderDatePills();
