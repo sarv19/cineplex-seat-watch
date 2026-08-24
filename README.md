@@ -1,5 +1,7 @@
 # Cineplex seat watch
 
+Live seat availability visualization: **[https://sarv19.github.io/cineplex-seat-watch/](https://sarv19.github.io/cineplex-seat-watch/)**
+
 This repository discovers every online, reserved-seat showing of *The Odyssey*
 in IMAX 70MM at Cineplex Cinemas Vaughan. It checks seats F7–F23,
 G7–G13, H7–H23, I7–I13, and J7–J13 approximately every five minutes and

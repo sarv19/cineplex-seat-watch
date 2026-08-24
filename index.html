@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cineplex Seat Watch — The Odyssey in IMAX 70MM</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎟️</text></svg>">
+  <style>
+    :root {
+      --bg: #0b0d14;
+      --bg-card: #141824;
+      --bg-card-hover: #1b2132;
+      --bg-surface: #1e2438;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: #262f49;
+      --border-subtle: #1e2538;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --available: #10b981;
+      --available-glow: rgba(16, 185, 129, 0.4);
+      --available-bg: rgba(16, 185, 129, 0.15);
+      --occupied: #283046;
+      --occupied-border: #3b4664;
+      --occupied-text: #64748b;
+      --selected: #00f0ff;
+      --radius: 12px;
+      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: linear-gradient(180deg, #111522 0%, rgba(11, 13, 20, 0.95) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .badge-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge-imax {
+      background: linear-gradient(135deg, #00f0ff, #0077fe);
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+    }
+
+    .badge-theatre {
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge-live {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .stat-val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-val.highlight {
+      color: var(--available);
+    }
+
+    .stat-lbl {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      background: var(--bg-card);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .filter-options {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-checkbox {
+      appearance: none;
+      width: 36px;
+      height: 20px;
+      background: var(--bg-surface);
+      border-radius: 9999px;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .toggle-checkbox::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      background: #94a3b8;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .toggle-checkbox:checked {
+      background: var(--available);
+      border-color: var(--available);
+    }
+
+    .toggle-checkbox:checked::after {
+      left: 18px;
+      background: #fff;
+    }
+
+    .refresh-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    /* Date Pills Scroller */
+    .date-nav-container {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .date-pills {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .date-pills::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .date-pills::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .date-pill {
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 0.85rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 80px;
+    }
+
+    .date-pill:hover {
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+    }
+
+    .date-pill.active {
+      background: var(--bg-surface);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .date-pill .pill-day {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .date-pill .pill-date {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .date-pill .pill-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: transparent;
+    }
+
+    .date-pill.has-available .pill-dot {
+      background: var(--available);
+      box-shadow: 0 0 6px var(--available);
+    }
+
+    /* Screenings Grid */
+    .day-section {
+      margin-bottom: 2rem;
+    }
+
+    .day-heading {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .day-heading::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    .showtime-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .showtime-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .showtime-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .showtime-card.has-seats {
+      border-color: var(--available);
+      background: linear-gradient(180deg, var(--bg-card) 0%, rgba(16, 185, 129, 0.04) 100%);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+    }
+
+    .showtime-card.has-seats:hover {
+      border-color: #34d399;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .card-time {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-date-sub {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .status-badge.available {
+      background: var(--available-bg);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.occupied {
+      background: var(--bg-surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .available-seat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.25rem;
+    }
+
+    .seat-chip {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      background: var(--available);
+      color: #000;
+      border-radius: 4px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #04101e;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: #7dd3fc;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-surface);
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    .btn-cineplex {
+      background: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+      font-size: 0.75rem;
+    }
+
+    .btn-cineplex:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    /* Screen 2: Seat Map Viewer */
+    .view-container {
+      display: none;
+    }
+
+    .view-container.active {
+      display: block;
+    }
+
+    .seatmap-top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+    }
+
+    .seatmap-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .seatmap-meta h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .seatmap-meta-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .seatmap-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: auto;
+    }
+
+    /* IMAX Curved Screen Graphic */
+    .screen-area {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .screen-curve {
+      width: 100%;
+      height: 24px;
+      border-top: 4px solid var(--accent);
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      box-shadow: 0 -8px 25px rgba(56, 189, 248, 0.4);
+      position: relative;
+    }
+
+    .screen-curve::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: radial-gradient(ellipse at top, rgba(56, 189, 248, 0.3) 0%, transparent 80%);
+    }
+
+    .screen-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    /* Seat Grid Layout */
+    .auditorium-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 820px;
+      user-select: none;
+    }
+
+    .seat-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .row-label {
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      width: 24px;
+      text-align: center;
+    }
+
+    .seats-group {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .seat {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px 6px 4px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--occupied-border);
+      background: var(--occupied);
+      color: var(--occupied-text);
+    }
+
+    .seat::after {
+      content: "";
+      position: absolute;
+      bottom: 2px;
+      width: 70%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    .seat.available {
+      background: var(--available);
+      color: #04101e;
+      border-color: #34d399;
+      box-shadow: 0 0 10px var(--available-glow);
+    }
+
+    .seat.available:hover {
+      transform: scale(1.18);
+      z-index: 10;
+      box-shadow: 0 0 16px var(--available-glow);
+    }
+
+    .seat.selected {
+      outline: 2px solid var(--selected);
+      outline-offset: 2px;
+      transform: scale(1.15);
+      z-index: 12;
+    }
+
+    .seat.occupied:hover {
+      background: #333d59;
+      color: #94a3b8;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .legend-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .legend-box.available {
+      background: var(--available);
+      box-shadow: 0 0 6px var(--available-glow);
+    }
+
+    .legend-box.occupied {
+      background: var(--occupied);
+      border: 1px solid var(--occupied-border);
+    }
+
+    /* Selected Seat Drawer */
+    .selection-drawer {
+      margin-top: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .drawer-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .drawer-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .drawer-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Empty / Loading State */
+    .state-message {
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: auto;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .seat {
+        width: 24px;
+        height: 24px;
+        font-size: 0.6rem;
+      }
+      .seats-group {
+        gap: 3px;
+      }
+      .row-label {
+        font-size: 0.75rem;
+        width: 16px;
+      }
+      .showtime-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-bar {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="title-group">
+        <div class="badge-group">
+          <span class="badge badge-imax">IMAX 70MM</span>
+          <span class="badge badge-theatre">Cineplex Vaughan</span>
+          <span class="badge badge-live"><span class="live-dot"></span> Live 5-Min Monitor</span>
+        </div>
+        <h1>The Odyssey</h1>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-val highlight" id="stat-available">-</span>
+          <span class="stat-lbl">Open Seats</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val" id="stat-active">-</span>
+          <span class="stat-lbl">Upcoming Shows</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-val" id="stat-refreshed">-</span>
+          <span class="stat-lbl">Last Checked</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- View 1: Screenings List & Date Picker -->
+    <div id="view-screenings" class="view-container active">
+      <div class="controls-bar">
+        <div class="filter-options">
+          <label class="toggle-label">
+            <input type="checkbox" id="filter-available-only" class="toggle-checkbox">
+            <span>Show Available Only</span>
+          </label>
+        </div>
+        <button class="refresh-btn" id="btn-manual-refresh" title="Reload live data">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="refresh-timer">Refresh</span>
+        </button>
+      </div>
+
+      <div class="date-nav-container">
+        <div class="date-pills" id="date-pills"></div>
+      </div>
+
+      <div id="screenings-container">
+        <div class="state-message">
+          <div class="spinner"></div>
+          <p>Loading showtime and seat availability data...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 2: Seat Map Viewer -->
+    <div id="view-seatmap" class="view-container">
+      <div class="seatmap-top-bar">
+        <div class="seatmap-meta">
+          <button class="btn btn-outline" id="btn-back-to-screenings" style="align-self: flex-start; margin-bottom: 0.5rem;">
+            ← Back to All Showtimes
+          </button>
+          <h2 id="seatmap-showtime-label">-</h2>
+          <div class="seatmap-meta-subtitle" id="seatmap-showtime-sub">Auditorium 1 • 55 Watched Center Seats</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <a id="btn-seatmap-cineplex" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+            Book on Cineplex ↗
+          </a>
+        </div>
+      </div>
+
+      <div class="seatmap-container">
+        <div class="screen-area">
+          <div class="screen-curve"></div>
+          <div class="screen-label">IMAX® 70MM Screen</div>
+        </div>
+
+        <div class="auditorium-grid" id="auditorium-grid"></div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-box available"></div>
+            <span>Available Watched Seat</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-box occupied"></div>
+            <span>Occupied / Reserved</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="selection-drawer" id="selection-drawer">
+        <div class="drawer-info">
+          <div class="drawer-title" id="drawer-title">Select an available seat</div>
+          <div class="drawer-desc" id="drawer-desc">Clicking any green seat lets you jump directly to Cineplex checkout.</div>
+        </div>
+        <a id="drawer-action-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+          Open Cineplex Checkout ↗
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>
+      Monitors prime center seats F7–F23, G7–G13, H7–H23, I7–I13, and J7–J13 at Cineplex Vaughan every 5 minutes.
+      • <a href="https://github.com/sarv19/cineplex-seat-watch" target="_blank" rel="noopener">GitHub Repository</a>
+    </p>
+  </footer>
+
+  <script>
+    // State
+    let discoveryData = { showtimes: [] };
+    let monitorState = { availableByShowtime: {} };
+    let showtimesConfig = {};
+    let activeDateFilter = "all";
+    let filterAvailableOnly = false;
+    let currentShowtimeId = null;
+    let selectedSeatLabel = null;
+
+    // Auditorium Rows Definition (Screen is at top)
+    // Row F is closest to screen, followed by G, H, I, J towards the back
+    const ROW_DEFINITIONS = [
+      { row: 'F', start: 7, end: 23, count: 17 },
+      { row: 'G', start: 7, end: 13, count: 7 },
+      { row: 'H', start: 7, end: 23, count: 17 },
+      { row: 'I', start: 7, end: 13, count: 7 },
+      { row: 'J', start: 7, end: 13, count: 7 },
+    ];
+
+    async function loadData() {
+      try {
+        const [configRes, discoveryRes, stateRes] = await Promise.all([
+          fetch('showtimes.json?t=' + Date.now()).then(r => r.json()).catch(() => ({})),
+          fetch('.discovery-cache.json?t=' + Date.now()).then(r => r.json()).catch(() => ({ showtimes: [] })),
+          fetch('.monitor-state.json?t=' + Date.now()).then(r => r.json()).catch(() => ({ availableByShowtime: {} }))
+        ]);
+
+        showtimesConfig = configRes;
+        discoveryData = discoveryRes;
+        monitorState = stateRes;
+
+        updateStats();
+        renderDatePills();
+        renderScreenings();
+
+        // Check URL hash
+        handleHashChange();
+      } catch (err) {
+        console.error('Error loading data:', err);
+        document.getElementById('screenings-container').innerHTML = `
+          <div class="state-message">
+            <p style="color: #ef4444; font-weight: 700; margin-bottom: 0.5rem;">Failed to load seat monitoring data.</p>
+            <p style="font-size: 0.85rem;">Ensure the repository cache files (.discovery-cache.json, .monitor-state.json) are accessible.</p>
+          </div>
+        `;
+      }
+    }
+
+    function updateStats() {
+      const showtimes = discoveryData.showtimes || [];
+      const now = Date.now();
+      const activeShowtimes = showtimes.filter(s => new Date(s.startsAt).getTime() > now);
+      
+      let totalAvailable = 0;
+      for (const showtime of activeShowtimes) {
+        const avail = monitorState.availableByShowtime[showtime.id] || [];
+        totalAvailable += avail.length;
+      }
+
+      document.getElementById('stat-available').textContent = totalAvailable;
+      document.getElementById('stat-active').textContent = activeShowtimes.length;
+
+      if (discoveryData.refreshedAt) {
+        const date = new Date(discoveryData.refreshedAt);
+        document.getElementById('stat-refreshed').textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        document.getElementById('stat-refreshed').textContent = 'Live';
+      }
+    }
+
+    function getGroupedShowtimes() {
+      const showtimes = discoveryData.showtimes || [];
+      const groups = {};
+
+      for (const st of showtimes) {
+        const d = new Date(st.startsAt);
+        // Format YYYY-MM-DD in Toronto time
+        const dateKey = d.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+        if (!groups[dateKey]) {
+          groups[dateKey] = {
+            dateStr: dateKey,
+            displayDate: d.toLocaleDateString('en-US', { timeZone: 'America/Toronto', weekday: 'long', month: 'long', day: 'numeric' }),
+            shortDate: d.toLocaleDateString('en-US', { timeZone: 'America/Toronto', month: 'short', day: 'numeric' }),
+            dayOfWeek: d.toLocaleDateString('en-US', { timeZone: 'America/Toronto', weekday: 'short' }),
+            showtimes: []
+          };
+        }
+        groups[dateKey].showtimes.push(st);
+      }
+
+      return Object.values(groups);
+    }
+
+    function renderDatePills() {
+      const groups = getGroupedShowtimes();
+      const container = document.getElementById('date-pills');
+      
+      let html = `
+        <div class="date-pill ${activeDateFilter === 'all' ? 'active' : ''}" onclick="selectDateFilter('all')">
+          <span class="pill-day">ALL</span>
+          <span class="pill-date">DATES</span>
+          <span class="pill-dot"></span>
+        </div>
+      `;
+
+      for (const group of groups) {
+        let hasAvail = false;
+        for (const st of group.showtimes) {
+          const avail = monitorState.availableByShowtime[st.id] || [];
+          if (avail.length > 0) {
+            hasAvail = true;
+            break;
+          }
+        }
+
+        const isActive = activeDateFilter === group.dateStr;
+        html += `
+          <div class="date-pill ${isActive ? 'active' : ''} ${hasAvail ? 'has-available' : ''}" onclick="selectDateFilter('${group.dateStr}')">
+            <span class="pill-day">${group.dayOfWeek}</span>
+            <span class="pill-date">${group.shortDate}</span>
+            <span class="pill-dot"></span>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    window.selectDateFilter = function(dateStr) {
+      activeDateFilter = dateStr;
+      renderDatePills();
+      renderScreenings();
+    };
+
+    function renderScreenings() {
+      const groups = getGroupedShowtimes();
+      const container = document.getElementById('screenings-container');
+
+      const filteredGroups = groups.filter(group => {
+        if (activeDateFilter !== 'all' && group.dateStr !== activeDateFilter) return false;
+        return true;
+      });
+
+      let renderedSectionCount = 0;
+      let html = '';
+
+      for (const group of filteredGroups) {
+        let groupShowtimes = group.showtimes;
+
+        if (filterAvailableOnly) {
+          groupShowtimes = groupShowtimes.filter(st => {
+            const avail = monitorState.availableByShowtime[st.id] || [];
+            return avail.length > 0;
+          });
+        }
+
+        if (groupShowtimes.length === 0) continue;
+        renderedSectionCount++;
+
+        html += `
+          <div class="day-section">
+            <div class="day-heading">${group.displayDate}</div>
+            <div class="showtime-grid">
+        `;
+
+        for (const st of groupShowtimes) {
+          const availableSeats = monitorState.availableByShowtime[st.id] || [];
+          const hasSeats = availableSeats.length > 0;
+          const timeFormatted = new Date(st.startsAt).toLocaleTimeString('en-US', {
+            timeZone: 'America/Toronto',
+            hour: 'numeric',
+            minute: '2-digit'
+          });
+
+          html += `
+            <div class="showtime-card ${hasSeats ? 'has-seats' : ''}" onclick="openSeatMap('${st.id}')">
+              <div class="card-header">
+                <div>
+                  <div class="card-time">${timeFormatted}</div>
+                  <div class="card-date-sub">IMAX 70MM</div>
+                </div>
+                <div class="status-badge ${hasSeats ? 'available' : 'occupied'}">
+                  ${hasSeats ? `✨ ${availableSeats.length} Open` : '0 / 55 Open'}
+                </div>
+              </div>
+
+              <div>
+                ${hasSeats ? `
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Available watched seats:</div>
+                  <div class="available-seat-chips">
+                    ${availableSeats.map(s => `<span class="seat-chip">${s}</span>`).join('')}
+                  </div>
+                ` : `
+                  <div style="font-size: 0.75rem; color: var(--text-dim);">Watched center seats currently occupied.</div>
+                `}
+              </div>
+
+              <div class="card-actions" onclick="event.stopPropagation()">
+                <button class="btn btn-primary" onclick="openSeatMap('${st.id}')">
+                  View Seat Map
+                </button>
+                <a href="${st.url}" target="_blank" rel="noopener noreferrer" class="btn btn-cineplex" title="Open in Cineplex">
+                  Book ↗
+                </a>
+              </div>
+            </div>
+          `;
+        }
+
+        html += `
+            </div>
+          </div>
+        `;
+      }
+
+      if (renderedSectionCount === 0) {
+        html = `
+          <div class="state-message">
+            <p style="font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">No showtimes found matching filter.</p>
+            <p style="font-size: 0.85rem;">Try toggling "Show Available Only" or choosing "All Dates".</p>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    window.openSeatMap = function(showtimeId) {
+      currentShowtimeId = showtimeId;
+      selectedSeatLabel = null;
+      window.location.hash = `showtime=${showtimeId}`;
+      renderSeatMapView();
+    };
+
+    function renderSeatMapView() {
+      const showtime = (discoveryData.showtimes || []).find(s => String(s.id) === String(currentShowtimeId));
+      if (!showtime) {
+        showScreeningsList();
+        return;
+      }
+
+      const availableSeats = monitorState.availableByShowtime[showtime.id] || [];
+      const availSet = new Set(availableSeats);
+
+      // Header info
+      const timeStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Toronto',
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(new Date(showtime.startsAt));
+
+      document.getElementById('seatmap-showtime-label').textContent = `${timeStr}`;
+      document.getElementById('seatmap-showtime-sub').textContent = 
+        `${availableSeats.length} of 55 watched seats available • Cineplex Cinemas Vaughan`;
+      
+      const cineplexBtn = document.getElementById('btn-seatmap-cineplex');
+      cineplexBtn.href = showtime.url;
+
+      // Render Grid
+      const grid = document.getElementById('auditorium-grid');
+      let gridHtml = '';
+
+      for (const rowDef of ROW_DEFINITIONS) {
+        gridHtml += `
+          <div class="seat-row">
+            <div class="row-label">${rowDef.row}</div>
+            <div class="seats-group">
+        `;
+
+        for (let num = rowDef.start; num <= rowDef.end; num++) {
+          const seatLabel = `${rowDef.row}${num}`;
+          const isAvail = availSet.has(seatLabel);
+          const isSelected = selectedSeatLabel === seatLabel;
+
+          gridHtml += `
+            <div class="seat ${isAvail ? 'available' : 'occupied'} ${isSelected ? 'selected' : ''}" 
+                 onclick="selectSeat('${seatLabel}', ${isAvail}, '${showtime.url}')"
+                 title="${seatLabel}: ${isAvail ? 'AVAILABLE' : 'Occupied'}">
+              ${num}
+            </div>
+          `;
+        }
+
+        gridHtml += `
+            </div>
+            <div class="row-label">${rowDef.row}</div>
+          </div>
+        `;
+      }
+
+      grid.innerHTML = gridHtml;
+
+      // Update drawer
+      updateDrawer(showtime, availableSeats);
+
+      // Switch view
+      document.getElementById('view-screenings').classList.remove('active');
+      document.getElementById('view-seatmap').classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.selectSeat = function(seatLabel, isAvail, url) {
+      selectedSeatLabel = seatLabel;
+      renderSeatMapView();
+    };
+
+    function updateDrawer(showtime, availableSeats) {
+      const titleEl = document.getElementById('drawer-title');
+      const descEl = document.getElementById('drawer-desc');
+      const btnEl = document.getElementById('drawer-action-btn');
+
+      btnEl.href = showtime.url;
+
+      if (selectedSeatLabel) {
+        const isAvail = availableSeats.includes(selectedSeatLabel);
+        if (isAvail) {
+          titleEl.textContent = `Seat ${selectedSeatLabel} is AVAILABLE! 🎉`;
+          descEl.textContent = `Ready to book for ${showtime.label}. Click to open Cineplex ticketing preview.`;
+          btnEl.style.display = 'inline-flex';
+        } else {
+          titleEl.textContent = `Seat ${selectedSeatLabel} is currently occupied`;
+          descEl.textContent = `Monitored every 5 minutes. You can still open Cineplex to view full auditorium seating.`;
+          btnEl.style.display = 'inline-flex';
+        }
+      } else if (availableSeats.length > 0) {
+        titleEl.textContent = `${availableSeats.length} Watched Seat(s) Available: ${availableSeats.join(', ')}`;
+        descEl.textContent = `Click any green seat or proceed directly to Cineplex.`;
+        btnEl.style.display = 'inline-flex';
+      } else {
+        titleEl.textContent = `All 55 watched center seats are occupied`;
+        descEl.textContent = `Checks automatically every 5 minutes and alerts when seats open up.`;
+        btnEl.style.display = 'inline-flex';
+      }
+    }
+
+    function showScreeningsList() {
+      currentShowtimeId = null;
+      selectedSeatLabel = null;
+      window.location.hash = '';
+      document.getElementById('view-seatmap').classList.remove('active');
+      document.getElementById('view-screenings').classList.add('active');
+    }
+
+    function handleHashChange() {
+      const hash = window.location.hash;
+      const match = hash.match(/showtime=([^&]+)/);
+      if (match) {
+        currentShowtimeId = match[1];
+        renderSeatMapView();
+      } else {
+        showScreeningsList();
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('btn-back-to-screenings').addEventListener('click', showScreeningsList);
+    
+    document.getElementById('filter-available-only').addEventListener('change', (e) => {
+      filterAvailableOnly = e.target.checked;
+      renderScreenings();
+    });
+
+    document.getElementById('btn-manual-refresh').addEventListener('click', () => {
+      loadData();
+    });
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && currentShowtimeId) {
+        showScreeningsList();
+      }
+    });
+
+    // Auto-refresh poll every 60 seconds
+    setInterval(loadData, 60_000);
+
+    // Initial Load
+    loadData();
+  </script>
+</body>
+</html>
