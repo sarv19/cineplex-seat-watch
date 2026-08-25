@@ -25,8 +25,10 @@ const theatres = (
 }));
 
 const previousState = await readJson(".monitor-state.json", {
+  lastChecked: null,
   availableByShowtime: {},
 });
+const previousAvailable = previousState.availableByShowtime ?? previousState;
 const seatMapCache = await readJson(".seat-map-cache.json", {});
 const discoveryCache = await readJson(".discovery-cache.json", {
   scope: null,
@@ -49,11 +51,11 @@ const activeShowtimes = allShowtimes.filter(
 const checks = await mapWithConcurrency(activeShowtimes, 8, checkShowtime);
 const successfulChecks = checks.filter((check) => !check.error);
 const errors = checks.filter((check) => check.error);
-const nextAvailableByShowtime = { ...previousState.availableByShowtime };
+const nextAvailableByShowtime = { ...previousAvailable };
 const alerts = [];
 
 for (const check of successfulChecks) {
-  const before = previousState.availableByShowtime[check.id] ?? [];
+  const before = previousAvailable[check.id] ?? [];
   const newlyAvailable = check.available.filter((seat) => !before.includes(seat));
 
   if (newlyAvailable.length > 0) {
@@ -92,7 +94,14 @@ const shouldDisable =
 if (!dryRun) {
   await writeFile(
     ".monitor-state.json",
-    `${JSON.stringify({ availableByShowtime: nextAvailableByShowtime }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        lastChecked: new Date(now).toISOString(),
+        availableByShowtime: nextAvailableByShowtime,
+      },
+      null,
+      2,
+    )}\n`,
   );
 }
 await writeFile(".seat-map-cache.json", `${JSON.stringify(seatMapCache, null, 2)}\n`);

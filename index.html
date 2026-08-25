@@ -1177,10 +1177,15 @@
       }
     }
 
+    function getAvailabilityMap() {
+      return monitorState.availableByShowtime || monitorState || {};
+    }
+
     function updateStats() {
       const showtimes = discoveryData.showtimes || [];
       const now = Date.now();
       const activeShowtimes = showtimes.filter(s => new Date(s.startsAt).getTime() > now);
+      const availMap = getAvailabilityMap();
       
       let totalAvailable = 0;
       let countVaughan = 0;
@@ -1191,7 +1196,7 @@
         if (theatre.id === 7408) countVaughan++;
         else if (theatre.id === 7420) countMississauga++;
 
-        const avail = monitorState.availableByShowtime[showtime.id] || [];
+        const avail = availMap[showtime.id] || [];
         totalAvailable += avail.length;
       }
 
@@ -1201,9 +1206,11 @@
       document.getElementById('count-7408').textContent = countVaughan;
       document.getElementById('count-7420').textContent = countMississauga;
 
-      if (discoveryData.refreshedAt) {
-        const date = new Date(discoveryData.refreshedAt);
+      const checkTime = monitorState.lastChecked || discoveryData.refreshedAt;
+      if (checkTime) {
+        const date = new Date(checkTime);
         document.getElementById('stat-refreshed').textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('stat-refreshed').title = `Checked at: ${date.toLocaleString()}`;
       } else {
         document.getElementById('stat-refreshed').textContent = 'Live';
       }
@@ -1249,10 +1256,11 @@
         </div>
       `;
 
+      const availMap = getAvailabilityMap();
       for (const group of groups) {
         let hasAvail = false;
         for (const st of group.showtimes) {
-          const avail = monitorState.availableByShowtime[st.id] || [];
+          const avail = availMap[st.id] || [];
           if (avail.length > 0) {
             hasAvail = true;
             break;
@@ -1300,12 +1308,13 @@
       let renderedSectionCount = 0;
       let html = '';
 
+      const availMap = getAvailabilityMap();
       for (const group of filteredGroups) {
         let groupShowtimes = group.showtimes;
 
         if (filterAvailableOnly) {
           groupShowtimes = groupShowtimes.filter(st => {
-            const avail = monitorState.availableByShowtime[st.id] || [];
+            const avail = availMap[st.id] || [];
             return avail.length > 0;
           });
         }
@@ -1321,7 +1330,7 @@
 
         for (const st of groupShowtimes) {
           const theatre = getTheatreInfo(st);
-          const availableSeats = monitorState.availableByShowtime[st.id] || [];
+          const availableSeats = availMap[st.id] || [];
           const hasSeats = availableSeats.length > 0;
           const timeFormatted = new Date(st.startsAt).toLocaleTimeString('en-US', {
             timeZone: 'America/Toronto',
@@ -1403,7 +1412,8 @@
       }
 
       const theatre = getTheatreInfo(showtime);
-      const availableSeats = monitorState.availableByShowtime[showtime.id] || [];
+      const availMap = getAvailabilityMap();
+      const availableSeats = availMap[showtime.id] || [];
       const availSet = new Set(availableSeats);
 
       // Header info
