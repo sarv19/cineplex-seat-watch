@@ -69,7 +69,7 @@
     .title-group {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.35rem;
     }
 
     .badge-group {
@@ -100,6 +100,18 @@
       background: var(--bg-surface);
       color: var(--text-muted);
       border: 1px solid var(--border);
+    }
+
+    .badge-vaughan {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-mississauga {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.3);
     }
 
     .badge-live {
@@ -187,10 +199,72 @@
       border: 1px solid var(--border);
     }
 
+    .location-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--bg-surface);
+      padding: 0.25rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .loc-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: 7px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .loc-btn:hover {
+      color: var(--text);
+      background: var(--bg-card-hover);
+    }
+
+    .loc-btn.active {
+      background: var(--bg-card);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+    }
+
+    .loc-btn.active.btn-loc-vaughan {
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #e9d5ff;
+    }
+
+    .loc-btn.active.btn-loc-mississauga {
+      border-color: rgba(14, 165, 233, 0.4);
+      color: #bae6fd;
+    }
+
+    .loc-pill-count {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 9999px;
+      background: var(--bg-surface);
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .loc-btn.active .loc-pill-count {
+      background: var(--border);
+      color: var(--text-muted);
+    }
+
     .filter-options {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       flex-wrap: wrap;
     }
 
@@ -358,7 +432,7 @@
 
     .showtime-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 1rem;
     }
 
@@ -395,6 +469,36 @@
       box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
     }
 
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .location-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .location-tag.vaughan {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .location-tag.mississauga {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -410,6 +514,7 @@
     .card-date-sub {
       font-size: 0.75rem;
       color: var(--text-dim);
+      margin-top: 0.1rem;
     }
 
     .status-badge {
@@ -529,7 +634,14 @@
     .seatmap-meta {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.35rem;
+    }
+
+    .seatmap-heading-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
     }
 
     .seatmap-meta h2 {
@@ -800,6 +912,14 @@
         width: 100%;
         justify-content: space-between;
       }
+      .location-filter-group {
+        width: 100%;
+        justify-content: stretch;
+      }
+      .loc-btn {
+        flex: 1;
+        justify-content: center;
+      }
     }
   </style>
 </head>
@@ -810,7 +930,8 @@
       <div class="title-group">
         <div class="badge-group">
           <span class="badge badge-imax">IMAX 70MM</span>
-          <span class="badge badge-theatre">Cineplex Vaughan</span>
+          <span class="badge badge-vaughan">Vaughan</span>
+          <span class="badge badge-mississauga">Mississauga</span>
           <span class="badge badge-live"><span class="live-dot"></span> Live 5-Min Monitor</span>
         </div>
         <h1>The Odyssey</h1>
@@ -836,16 +957,32 @@
     <!-- View 1: Screenings List & Date Picker -->
     <div id="view-screenings" class="view-container active">
       <div class="controls-bar">
+        <!-- Location Switcher -->
+        <div class="location-filter-group">
+          <button class="loc-btn active" id="loc-btn-all" onclick="selectLocationFilter('all')">
+            <span>All Locations</span>
+            <span class="loc-pill-count" id="count-all">-</span>
+          </button>
+          <button class="loc-btn btn-loc-vaughan" id="loc-btn-7408" onclick="selectLocationFilter('7408')">
+            <span>📍 Vaughan</span>
+            <span class="loc-pill-count" id="count-7408">-</span>
+          </button>
+          <button class="loc-btn btn-loc-mississauga" id="loc-btn-7420" onclick="selectLocationFilter('7420')">
+            <span>📍 Mississauga</span>
+            <span class="loc-pill-count" id="count-7420">-</span>
+          </button>
+        </div>
+
         <div class="filter-options">
           <label class="toggle-label">
             <input type="checkbox" id="filter-available-only" class="toggle-checkbox">
             <span>Show Available Only</span>
           </label>
+          <button class="refresh-btn" id="btn-manual-refresh" title="Reload live data">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span id="refresh-timer">Refresh</span>
+          </button>
         </div>
-        <button class="refresh-btn" id="btn-manual-refresh" title="Reload live data">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span id="refresh-timer">Refresh</span>
-        </button>
       </div>
 
       <div class="date-nav-container">
@@ -867,7 +1004,10 @@
           <button class="btn btn-outline" id="btn-back-to-screenings" style="align-self: flex-start; margin-bottom: 0.5rem;">
             ← Back to All Showtimes
           </button>
-          <h2 id="seatmap-showtime-label">-</h2>
+          <div class="seatmap-heading-row">
+            <h2 id="seatmap-showtime-label">-</h2>
+            <span id="seatmap-theatre-tag" class="location-tag">-</span>
+          </div>
           <div class="seatmap-meta-subtitle" id="seatmap-showtime-sub">Auditorium 1 • 55 Watched Center Seats</div>
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -911,7 +1051,7 @@
 
   <footer>
     <p>
-      Monitors prime center seats F7–F23, G7–G13, H7–H23, I7–I13, and J7–J13 at Cineplex Vaughan every 5 minutes.
+      Monitors prime center seats F7–F23, G7–G13, H7–H23, I7–I13, and J7–J13 at Cineplex Cinemas Vaughan & Cineplex Cinemas Mississauga Square One every 5 minutes.
       • <a href="https://github.com/sarv19/cineplex-seat-watch" target="_blank" rel="noopener">GitHub Repository</a>
     </p>
   </footer>
@@ -922,9 +1062,27 @@
     let monitorState = { availableByShowtime: {} };
     let showtimesConfig = {};
     let activeDateFilter = "all";
+    let activeLocationFilter = "all"; // 'all', '7408', '7420'
     let filterAvailableOnly = false;
     let currentShowtimeId = null;
     let selectedSeatLabel = null;
+
+    const KNOWN_THEATRES = {
+      7408: {
+        id: 7408,
+        name: "Cineplex Cinemas Vaughan",
+        shortName: "Vaughan",
+        tagClass: "vaughan",
+        badgeClass: "badge-vaughan"
+      },
+      7420: {
+        id: 7420,
+        name: "Cineplex Cinemas Mississauga Square One",
+        shortName: "Mississauga",
+        tagClass: "mississauga",
+        badgeClass: "badge-mississauga"
+      }
+    };
 
     // Auditorium Rows Definition (Screen is at top)
     // Row F is closest to screen, followed by G, H, I, J towards the back
@@ -935,6 +1093,43 @@
       { row: 'I', start: 7, end: 13, count: 7 },
       { row: 'J', start: 7, end: 13, count: 7 },
     ];
+
+    function getTheatreInfo(showtime) {
+      let id = showtime.theatreId;
+      if (!id && showtime.url) {
+        const match = showtime.url.match(/locationId=(\d+)/);
+        if (match) id = Number(match[1]);
+      }
+      if (!id && showtimesConfig.theatres?.length === 1) {
+        id = Number(showtimesConfig.theatres[0].id ?? showtimesConfig.theatres[0].theatreId);
+      }
+      if (!id && showtimesConfig.theatreId) {
+        id = Number(showtimesConfig.theatreId);
+      }
+      if (!id) {
+        id = 7408;
+      }
+      id = Number(id);
+
+      if (KNOWN_THEATRES[id]) {
+        return {
+          id,
+          name: showtime.theatreName || KNOWN_THEATRES[id].name,
+          shortName: showtime.theatreShortName || KNOWN_THEATRES[id].shortName,
+          tagClass: KNOWN_THEATRES[id].tagClass,
+          badgeClass: KNOWN_THEATRES[id].badgeClass
+        };
+      }
+
+      const cfgTheatre = (showtimesConfig.theatres || []).find(t => Number(t.id ?? t.theatreId) === id);
+      return {
+        id,
+        name: showtime.theatreName || cfgTheatre?.name || `Theatre ${id}`,
+        shortName: showtime.theatreShortName || cfgTheatre?.shortName || `Theatre ${id}`,
+        tagClass: "vaughan",
+        badgeClass: "badge-theatre"
+      };
+    }
 
     async function fetchResource(filename) {
       // 1. Try relative path (standard GitHub Pages & local HTTP servers)
@@ -988,13 +1183,23 @@
       const activeShowtimes = showtimes.filter(s => new Date(s.startsAt).getTime() > now);
       
       let totalAvailable = 0;
+      let countVaughan = 0;
+      let countMississauga = 0;
+
       for (const showtime of activeShowtimes) {
+        const theatre = getTheatreInfo(showtime);
+        if (theatre.id === 7408) countVaughan++;
+        else if (theatre.id === 7420) countMississauga++;
+
         const avail = monitorState.availableByShowtime[showtime.id] || [];
         totalAvailable += avail.length;
       }
 
       document.getElementById('stat-available').textContent = totalAvailable;
       document.getElementById('stat-active').textContent = activeShowtimes.length;
+      document.getElementById('count-all').textContent = activeShowtimes.length;
+      document.getElementById('count-7408').textContent = countVaughan;
+      document.getElementById('count-7420').textContent = countMississauga;
 
       if (discoveryData.refreshedAt) {
         const date = new Date(discoveryData.refreshedAt);
@@ -1009,6 +1214,11 @@
       const groups = {};
 
       for (const st of showtimes) {
+        const theatre = getTheatreInfo(st);
+        if (activeLocationFilter !== 'all' && String(theatre.id) !== String(activeLocationFilter)) {
+          continue;
+        }
+
         const d = new Date(st.startsAt);
         // Format YYYY-MM-DD in Toronto time
         const dateKey = d.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
@@ -1062,6 +1272,16 @@
       container.innerHTML = html;
     }
 
+    window.selectLocationFilter = function(locId) {
+      activeLocationFilter = locId;
+      document.querySelectorAll('.loc-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`loc-btn-${locId}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      renderDatePills();
+      renderScreenings();
+    };
+
     window.selectDateFilter = function(dateStr) {
       activeDateFilter = dateStr;
       renderDatePills();
@@ -1100,6 +1320,7 @@
         `;
 
         for (const st of groupShowtimes) {
+          const theatre = getTheatreInfo(st);
           const availableSeats = monitorState.availableByShowtime[st.id] || [];
           const hasSeats = availableSeats.length > 0;
           const timeFormatted = new Date(st.startsAt).toLocaleTimeString('en-US', {
@@ -1110,13 +1331,19 @@
 
           html += `
             <div class="showtime-card ${hasSeats ? 'has-seats' : ''}" onclick="openSeatMap('${st.id}')">
+              <div class="card-top-row">
+                <span class="location-tag ${theatre.tagClass}">
+                  📍 ${theatre.shortName}
+                </span>
+                <div class="status-badge ${hasSeats ? 'available' : 'occupied'}">
+                  ${hasSeats ? `✨ ${availableSeats.length} Open` : '0 / 55 Open'}
+                </div>
+              </div>
+
               <div class="card-header">
                 <div>
                   <div class="card-time">${timeFormatted}</div>
-                  <div class="card-date-sub">IMAX 70MM</div>
-                </div>
-                <div class="status-badge ${hasSeats ? 'available' : 'occupied'}">
-                  ${hasSeats ? `✨ ${availableSeats.length} Open` : '0 / 55 Open'}
+                  <div class="card-date-sub">IMAX 70MM • ${theatre.name}</div>
                 </div>
               </div>
 
@@ -1153,7 +1380,7 @@
         html = `
           <div class="state-message">
             <p style="font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">No showtimes found matching filter.</p>
-            <p style="font-size: 0.85rem;">Try toggling "Show Available Only" or choosing "All Dates".</p>
+            <p style="font-size: 0.85rem;">Try toggling "Show Available Only" or choosing "All Locations" / "All Dates".</p>
           </div>
         `;
       }
@@ -1175,6 +1402,7 @@
         return;
       }
 
+      const theatre = getTheatreInfo(showtime);
       const availableSeats = monitorState.availableByShowtime[showtime.id] || [];
       const availSet = new Set(availableSeats);
 
@@ -1189,8 +1417,12 @@
       }).format(new Date(showtime.startsAt));
 
       document.getElementById('seatmap-showtime-label').textContent = `${timeStr}`;
+      const tagEl = document.getElementById('seatmap-theatre-tag');
+      tagEl.className = `location-tag ${theatre.tagClass}`;
+      tagEl.textContent = `📍 ${theatre.name}`;
+
       document.getElementById('seatmap-showtime-sub').textContent = 
-        `${availableSeats.length} of 55 watched seats available • Cineplex Cinemas Vaughan`;
+        `${availableSeats.length} of 55 watched center seats available • Auditorium 1`;
       
       const cineplexBtn = document.getElementById('btn-seatmap-cineplex');
       cineplexBtn.href = showtime.url;
@@ -1230,7 +1462,7 @@
       grid.innerHTML = gridHtml;
 
       // Update drawer
-      updateDrawer(showtime, availableSeats);
+      updateDrawer(showtime, availableSeats, theatre);
 
       // Switch view
       document.getElementById('view-screenings').classList.remove('active');
@@ -1243,7 +1475,7 @@
       renderSeatMapView();
     };
 
-    function updateDrawer(showtime, availableSeats) {
+    function updateDrawer(showtime, availableSeats, theatre) {
       const titleEl = document.getElementById('drawer-title');
       const descEl = document.getElementById('drawer-desc');
       const btnEl = document.getElementById('drawer-action-btn');
@@ -1254,20 +1486,20 @@
         const isAvail = availableSeats.includes(selectedSeatLabel);
         if (isAvail) {
           titleEl.textContent = `Seat ${selectedSeatLabel} is AVAILABLE! 🎉`;
-          descEl.textContent = `Ready to book for ${showtime.label}. Click to open Cineplex ticketing preview.`;
+          descEl.textContent = `Ready to book for ${showtime.label} at ${theatre.name}. Click to open Cineplex ticketing preview.`;
           btnEl.style.display = 'inline-flex';
         } else {
           titleEl.textContent = `Seat ${selectedSeatLabel} is currently occupied`;
-          descEl.textContent = `Monitored every 5 minutes. You can still open Cineplex to view full auditorium seating.`;
+          descEl.textContent = `Monitored every 5 minutes at ${theatre.name}. You can still open Cineplex to view full auditorium seating.`;
           btnEl.style.display = 'inline-flex';
         }
       } else if (availableSeats.length > 0) {
         titleEl.textContent = `${availableSeats.length} Watched Seat(s) Available: ${availableSeats.join(', ')}`;
-        descEl.textContent = `Click any green seat or proceed directly to Cineplex.`;
+        descEl.textContent = `Click any green seat or proceed directly to Cineplex for ${theatre.name}.`;
         btnEl.style.display = 'inline-flex';
       } else {
         titleEl.textContent = `All 55 watched center seats are occupied`;
-        descEl.textContent = `Checks automatically every 5 minutes and alerts when seats open up.`;
+        descEl.textContent = `Checks automatically every 5 minutes for ${theatre.name} and alerts when seats open up.`;
         btnEl.style.display = 'inline-flex';
       }
     }

@@ -11,19 +11,23 @@ if (!token || !repository) {
 const result = JSON.parse(await readFile("alerts.json", "utf8"));
 
 if (result.alerts.length > 0) {
+  const firstAlert = result.alerts[0];
+  const firstLocName = firstAlert.theatreShortName || firstAlert.theatreName;
   const title =
     result.alerts.length === 1
-      ? `Cineplex seats available — ${result.alerts[0].label}: ${result.alerts[0].seats.join(", ")}`
+      ? `Cineplex seats available${firstLocName ? ` [${firstLocName}]` : ""} — ${firstAlert.label}: ${firstAlert.seats.join(", ")}`
       : `Cineplex seats available in ${result.alerts.length} showtimes`;
-  const sections = result.alerts.map((alert) =>
-    [
-      `### ${alert.label}`,
+  const sections = result.alerts.map((alert) => {
+    const locTag = alert.theatreShortName || alert.theatreName ? `[${alert.theatreShortName || alert.theatreName}] ` : "";
+    return [
+      `### ${locTag}${alert.label}`,
       "",
+      ...(alert.theatreName ? [`- **Theatre:** ${alert.theatreName}`] : []),
       `- **Newly available:** ${alert.seats.join(", ")}`,
       `- **All watched seats currently available:** ${alert.allAvailableSeats.join(", ")}`,
       `- [Open Cineplex and book now](${alert.url})`,
-    ].join("\n"),
-  );
+    ].join("\n");
+  });
   const body = [
     "## Watched Cineplex seats are available",
     "",

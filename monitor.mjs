@@ -10,6 +10,20 @@ if (!subscriptionKey) {
 }
 
 const config = JSON.parse(await readFile("showtimes.json", "utf8"));
+const theatres = (
+  config.theatres || [
+    {
+      id: config.theatreId,
+      name: config.theatreName,
+      shortName: config.theatreName,
+    },
+  ]
+).map((t) => ({
+  id: Number(t.id ?? t.theatreId),
+  name: t.name ?? t.theatreName,
+  shortName: t.shortName ?? t.name ?? t.theatreName ?? String(t.id ?? t.theatreId),
+}));
+
 const previousState = await readJson(".monitor-state.json", {
   availableByShowtime: {},
 });
@@ -21,7 +35,7 @@ const discoveryCache = await readJson(".discovery-cache.json", {
   showtimes: [],
 });
 const discoveryScope = JSON.stringify({
-  theatreId: config.theatreId,
+  theatres: theatres.map((t) => t.id).sort((a, b) => a - b),
   movieId: config.movieId,
   requiredExperienceTypes: [...config.requiredExperienceTypes].sort(),
 });
@@ -45,6 +59,9 @@ for (const check of successfulChecks) {
   if (newlyAvailable.length > 0) {
     alerts.push({
       id: check.id,
+      theatreId: check.theatreId,
+      theatreName: check.theatreName,
+      theatreShortName: check.theatreShortName,
       label: check.label,
       url: check.url,
       seats: newlyAvailable,
@@ -97,7 +114,7 @@ await writeFile(
 );
 
 console.log(
-  `Discovered ${allShowtimes.length} qualifying showtimes. ` +
+  `Discovered ${allShowtimes.length} qualifying showtimes across ${theatres.length} location(s). ` +
     `Checked ${successfulChecks.length}/${activeShowtimes.length} active showtimes; ` +
     `${alerts.length} new availability alert(s).`,
 );
@@ -152,66 +169,76 @@ async function getShowtimes() {
 }
 
 async function discoverShowtimes() {
-  const bookableDates = await fetchJson(
-    `${THEATRICAL_API}/v1/dates/bookable?locationId=${config.theatreId}`,
-  );
   const today = new Date(now);
   today.setUTCHours(0, 0, 0, 0);
   const discoveryStart = today.getTime() - 24 * 60 * 60_000;
   const horizon = today.getTime() + config.discoveryHorizonDays * 24 * 60 * 60_000;
-  const dates = bookableDates
-    .map((value) => String(value).slice(0, 10))
-    .filter((date) => {
-      const timestamp = new Date(`${date}T00:00:00Z`).getTime();
-      return timestamp >= discoveryStart && timestamp <= horizon;
-    });
-  const dailyListings = await mapWithConcurrency(dates, 8, async (date) =>
-    fetchJson(`${THEATRICAL_API}/v1/showtimes?locationId=${config.theatreId}&date=${date}`),
-  );
   const discovered = [];
 
-  for (const listing of dailyListings) {
-    for (const theatre of listing ?? []) {
-      if (Number(theatre.theatreId) !== Number(config.theatreId)) continue;
+  for (const theatre of theatres) {
+    try {
+      const bookableDates = await fetchJson(
+        `${THEATRICAL_API}/v1/dates/bookable?locationId=${theatre.id}`,
+      );
+      const dates = bookableDates
+        .map((value) => String(value).slice(0, 10))
+        .filter((date) => {
+          const timestamp = new Date(`${date}T00:00:00Z`).getTime();
+          return timestamp >= discoveryStart && timestamp <= horizon;
+        });
+      const dailyListings = await mapWithConcurrency(dates, 8, async (date) =>
+        fetchJson(`${THEATRICAL_API}/v1/showtimes?locationId=${theatre.id}&date=${date}`),
+      );
 
-      for (const day of theatre.dates ?? []) {
-        for (const movie of day.movies ?? []) {
-          if (
-            Number(movie.id) !== Number(config.movieId) &&
-            movie.name?.toLowerCase() !== config.movieName.toLowerCase()
-          ) {
-            continue;
-          }
+      for (const listing of dailyListings) {
+        for (const t of listing ?? []) {
+          if (Number(t.theatreId) !== Number(theatre.id)) continue;
 
-          for (const experience of movie.experiences ?? []) {
-            const types = experience.experienceTypes ?? [];
-            if (!config.requiredExperienceTypes.every((type) => types.includes(type))) {
-              continue;
-            }
-
-            for (const session of experience.sessions ?? []) {
+          for (const day of t.dates ?? []) {
+            for (const movie of day.movies ?? []) {
               if (
-                !session.isShowtimeEnabledOnline ||
-                !session.isReservedSeating ||
-                session.isInThePast
+                Number(movie.id) !== Number(config.movieId) &&
+                movie.name?.toLowerCase() !== config.movieName.toLowerCase()
               ) {
                 continue;
               }
 
-              const id = String(session.vistaSessionId);
-              const startsAt = session.showStartDateTimeUtc;
-              discovered.push({
-                id,
-                label: formatShowtime(startsAt),
-                startsAt,
-                url:
-                  `https://www.cineplex.com/ticketing/preview?locationId=${config.theatreId}` +
-                  `&showtimeId=${id}&dbox=false`,
-              });
+              for (const experience of movie.experiences ?? []) {
+                const types = experience.experienceTypes ?? [];
+                if (!config.requiredExperienceTypes.every((type) => types.includes(type))) {
+                  continue;
+                }
+
+                for (const session of experience.sessions ?? []) {
+                  if (
+                    !session.isShowtimeEnabledOnline ||
+                    !session.isReservedSeating ||
+                    session.isInThePast
+                  ) {
+                    continue;
+                  }
+
+                  const id = String(session.vistaSessionId);
+                  const startsAt = session.showStartDateTimeUtc;
+                  discovered.push({
+                    id,
+                    theatreId: theatre.id,
+                    theatreName: theatre.name,
+                    theatreShortName: theatre.shortName,
+                    label: formatShowtime(startsAt),
+                    startsAt,
+                    url:
+                      `https://www.cineplex.com/ticketing/preview?locationId=${theatre.id}` +
+                      `&showtimeId=${id}&dbox=false`,
+                  });
+                }
+              }
             }
           }
         }
       }
+    } catch (err) {
+      console.error(`Discovery error for theatre ${theatre.name} (${theatre.id}): ${err.message}`);
     }
   }
 
@@ -223,7 +250,7 @@ async function discoverShowtimes() {
 async function checkShowtime(showtime) {
   try {
     const seatIds = await getSeatIds(showtime);
-    const firstAvailability = await getAvailability(showtime.id);
+    const firstAvailability = await getAvailability(showtime);
     const firstAvailableSeats = availableWatchedSeats(firstAvailability, seatIds);
 
     if (firstAvailableSeats.length === 0) {
@@ -231,7 +258,7 @@ async function checkShowtime(showtime) {
     }
 
     await delay(5_000);
-    const confirmation = await getAvailability(showtime.id);
+    const confirmation = await getAvailability(showtime);
     const confirmedSeats = availableWatchedSeats(confirmation, seatIds).filter((seat) =>
       firstAvailableSeats.includes(seat),
     );
@@ -248,8 +275,9 @@ async function getSeatIds(showtime) {
     return cached;
   }
 
+  const theatreId = getShowtimeTheatreId(showtime);
   const layout = await fetchJson(
-    `${TICKETING_API}/v1/theatre/${config.theatreId}/showtime/${showtime.id}/seat-layout`,
+    `${TICKETING_API}/v1/theatre/${theatreId}/showtime/${showtime.id}/seat-layout`,
   );
   const seatsByLabel = {};
   collectSeats(layout, seatsByLabel);
@@ -267,10 +295,25 @@ async function getSeatIds(showtime) {
   return watchedSeatIds;
 }
 
-async function getAvailability(showtimeId) {
+async function getAvailability(showtime) {
+  const showtimeId = typeof showtime === "object" ? showtime.id : showtime;
+  const theatreId = getShowtimeTheatreId(showtime);
   return fetchJson(
-    `${TICKETING_API}/v1/theatre/${config.theatreId}/showtime/${showtimeId}/seat-availability?preview=true`,
+    `${TICKETING_API}/v1/theatre/${theatreId}/showtime/${showtimeId}/seat-availability?preview=true`,
   );
+}
+
+function getShowtimeTheatreId(showtime) {
+  if (typeof showtime === "object") {
+    if (showtime.theatreId) return showtime.theatreId;
+    if (showtime.url) {
+      const match = showtime.url.match(/locationId=(\d+)/);
+      if (match) return match[1];
+    }
+  }
+  const found = allShowtimes?.find((s) => String(s.id) === String(showtime?.id || showtime));
+  if (found?.theatreId) return found.theatreId;
+  return config.theatreId ?? theatres[0]?.id;
 }
 
 function availableWatchedSeats(availability, seatIds) {

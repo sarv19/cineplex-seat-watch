@@ -1,4 +1,16 @@
 {
+  "theatres": [
+    {
+      "id": 7408,
+      "name": "Cineplex Cinemas Vaughan",
+      "shortName": "Vaughan"
+    },
+    {
+      "id": 7420,
+      "name": "Cineplex Cinemas Mississauga Square One",
+      "shortName": "Mississauga"
+    }
+  ],
   "theatreId": 7408,
   "theatreName": "Cineplex Cinemas Vaughan",
   "timeZone": "America/Toronto",
