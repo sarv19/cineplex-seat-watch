@@ -1,35 +1,8 @@
 {
   "scope": "{\"theatres\":[7408,7420],\"movieId\":37617,\"requiredExperienceTypes\":[\"70mm\",\"IMAX\"]}",
-  "refreshedAt": "2026-09-13T21:47:18.618Z",
+  "refreshedAt": "2026-09-14T06:57:40.706Z",
   "lastQualifyingShowtimeStartsAt": "2026-10-01T03:00:00Z",
   "showtimes": [
-    {
-      "id": "539615",
-      "theatreId": 7408,
-      "theatreName": "Cineplex Cinemas Vaughan",
-      "theatreShortName": "Vaughan",
-      "label": "September 13, 2026 at 7:00 p.m.",
-      "startsAt": "2026-09-13T23:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7408&showtimeId=539615&dbox=false"
-    },
-    {
-      "id": "387238",
-      "theatreId": 7420,
-      "theatreName": "Cineplex Cinemas Mississauga Square One",
-      "theatreShortName": "Mississauga",
-      "label": "September 13, 2026 at 7:00 p.m.",
-      "startsAt": "2026-09-13T23:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7420&showtimeId=387238&dbox=false"
-    },
-    {
-      "id": "539614",
-      "theatreId": 7408,
-      "theatreName": "Cineplex Cinemas Vaughan",
-      "theatreShortName": "Vaughan",
-      "label": "September 13, 2026 at 11:00 p.m.",
-      "startsAt": "2026-09-14T03:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7408&showtimeId=539614&dbox=false"
-    },
     {
       "id": "539613",
       "theatreId": 7408,
