@@ -1,17 +1,8 @@
 {
   "scope": "{\"theatres\":[7408,7420],\"movieId\":37617,\"requiredExperienceTypes\":[\"70mm\",\"IMAX\"]}",
-  "refreshedAt": "2026-09-16T06:42:57.714Z",
+  "refreshedAt": "2026-09-16T16:44:18.589Z",
   "lastQualifyingShowtimeStartsAt": "2026-10-01T03:00:00Z",
   "showtimes": [
-    {
-      "id": "539621",
-      "theatreId": 7408,
-      "theatreName": "Cineplex Cinemas Vaughan",
-      "theatreShortName": "Vaughan",
-      "label": "September 16, 2026 at 11:00 a.m.",
-      "startsAt": "2026-09-16T15:00:00Z",
-      "url": "https://www.cineplex.com/ticketing/preview?locationId=7408&showtimeId=539621&dbox=false"
-    },
     {
       "id": "387245",
       "theatreId": 7420,
